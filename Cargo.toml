@@ -1,0 +1,30 @@
+[package]
+name = "em2rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Axel Chabot <axel.chabot@lefrenchpoc.fr>"]
+description = "Rust library for EM2RS stepper motor controller with Modbus RTU"
+license = "MIT"
+keywords = ["modbus", "stepper", "motor", "em2rs", "rtu"]
+categories = ["embedded", "hardware-support"]
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-modbus = { version = "0.16.5", default-features = false, features = ["rtu", "rtu-sync"] }
+tokio-serial = "5.4"
+thiserror = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[lib]
+name = "em2rs"
+path = "src/lib.rs"
+
+[[example]]
+name = "async_example"
+path = "examples/async_example.rs"
+
+[[example]]
+name = "sync_example"
+path = "examples/sync_example.rs"
