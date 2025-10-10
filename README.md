@@ -149,10 +149,6 @@ cargo run --example sync_example
 cargo run --example multiple_motors
 ```
 
-## Reference
-
-Based on the C library by Axel Chabot for EM2RS stepper motor controllers. See `datasheet/EM2RS_Series_User_Manual_V1.5.pdf` for hardware details.
-
 ## License
 
 MIT
