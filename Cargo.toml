@@ -8,6 +8,10 @@ license = "MIT"
 keywords = ["modbus", "stepper", "motor", "em2rs", "rtu"]
 categories = ["embedded", "hardware-support"]
 
+[features]
+default = []
+modbus-delay = []
+
 [dependencies]
 tokio = { version = "1.48.0", features = ["full"] }
 tokio-modbus = { version = "0.17.0", default-features = false, features = ["rtu", "rtu-sync"] }

@@ -1,7 +1,15 @@
+#[cfg(feature = "modbus-delay")]
+use std::thread;
+#[cfg(feature = "modbus-delay")]
+use std::time::Duration;
 use tokio_modbus::prelude::*;
 use crate::registers;
 use crate::registers::flags;
 use crate::types::*;
+
+/// Default delay after modbus requests (1ms)
+#[cfg(feature = "modbus-delay")]
+const MODBUS_DELAY: Duration = Duration::from_millis(1);
 
 /// Synchronous EM2RS stepper motor controller client
 /// 
@@ -57,6 +65,8 @@ impl Em2rsSyncClient {
     /// Write a single holding register
     fn write_register(&mut self, addr: u16, value: u16) -> Result<()> {
         let _ = self.ctx.write_single_register(addr, value)?;
+        #[cfg(feature = "modbus-delay")]
+        thread::sleep(MODBUS_DELAY);
         Ok(())
     }
 
@@ -64,12 +74,16 @@ impl Em2rsSyncClient {
     #[allow(dead_code)]
     fn write_registers(&mut self, addr: u16, values: &[u16]) -> Result<()> {
         let _ = self.ctx.write_multiple_registers(addr, values)?;
+        #[cfg(feature = "modbus-delay")]
+        thread::sleep(MODBUS_DELAY);
         Ok(())
     }
 
     /// Read holding registers
     fn read_registers(&mut self, addr: u16, count: u16) -> Result<Vec<u16>> {
         let data = self.ctx.read_holding_registers(addr, count)??;
+        #[cfg(feature = "modbus-delay")]
+        thread::sleep(MODBUS_DELAY);
         Ok(data)
     }
 
