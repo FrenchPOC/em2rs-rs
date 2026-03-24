@@ -1,18 +1,18 @@
+use crate::registers;
+use crate::registers::flags;
+use crate::types::*;
 #[cfg(feature = "modbus-delay")]
 use std::thread;
 #[cfg(feature = "modbus-delay")]
 use std::time::Duration;
 use tokio_modbus::prelude::*;
-use crate::registers;
-use crate::registers::flags;
-use crate::types::*;
 
 /// Default delay after modbus requests (1ms)
 #[cfg(feature = "modbus-delay")]
 const MODBUS_DELAY: Duration = Duration::from_millis(1);
 
 /// Synchronous EM2RS stepper motor controller client
-/// 
+///
 /// This client uses tokio-modbus sync API for blocking Modbus RTU communication.
 /// Multiple instances can be created for different motor IDs on the same bus.
 pub struct Em2rsSyncClient {
@@ -23,7 +23,7 @@ pub struct Em2rsSyncClient {
 
 impl Em2rsSyncClient {
     /// Create a new synchronous EM2RS client
-    /// 
+    ///
     /// # Arguments
     /// * `ctx` - Tokio-modbus sync context (already initialized for RTU communication)
     /// * `config` - Stepper motor configuration including slave ID
@@ -36,7 +36,7 @@ impl Em2rsSyncClient {
     }
 
     /// Consume the client and return the underlying Modbus context
-    /// 
+    ///
     /// This is useful when you want to reuse the same physical connection
     /// for multiple motors on the same RS485 bus with different slave IDs.
     pub fn into_context(self) -> client::sync::Context {
@@ -46,19 +46,21 @@ impl Em2rsSyncClient {
     /// Initialize the stepper motor with configured parameters
     pub fn init(&mut self) -> Result<()> {
         self.ctx.set_slave(Slave::from(self.slave_id));
-        
+
         // Set pulse per revolution
         self.write_register(registers::PULSE_PER_REV, self.config.pulse_per_rev)?;
-        
+
         // Set motor direction
         self.write_register(registers::MOTOR_DIRECTION, self.config.direction.into())?;
-        
+
         // Set peak current
         self.set_peak_current(self.config.phase_current)?;
-        
+
         // Set motor inductance
         self.set_motor_inductance(self.config.inductance)?;
-        
+
+        self.write_register(registers::PERCENT_SHAFT_LOCKED, 15)?;
+
         Ok(())
     }
 
@@ -151,7 +153,12 @@ impl Em2rsSyncClient {
             return Err(Em2rsError::InvalidDigitalInput(input_no));
         }
 
-        let config = u16::from(function) + if normally_closed { flags::SI_NC_INCR } else { 0 };
+        let config = u16::from(function)
+            + if normally_closed {
+                flags::SI_NC_INCR
+            } else {
+                0
+            };
         let register = registers::SI1 + ((input_no - 1) as u16 * 2);
         self.write_register(register, config)
     }
@@ -247,11 +254,10 @@ impl Em2rsSyncClient {
         move_to_pos: bool,
         method: HomingMethod,
     ) -> Result<()> {
-        let config = u16::from(direction) 
-            + if move_to_pos { 0x0002 } else { 0x0000 } 
-            + u16::from(method);
+        let config =
+            u16::from(direction) + if move_to_pos { 0x0002 } else { 0x0000 } + u16::from(method);
         self.write_register(registers::HOME_MODE, config)?;
-        self.write_register(0x601A, 0x0002)  // Additional configuration
+        self.write_register(0x601A, 0x0002) // Additional configuration
     }
 
     /// Set homing switch position
@@ -333,7 +339,7 @@ impl Em2rsSyncClient {
     }
 
     /// Configure path motion parameters
-    /// 
+    ///
     /// For simpler usage, consider using `apply_path_config` with a `PathConfig` struct
     #[allow(clippy::too_many_arguments)]
     pub fn configure_path_motion(
@@ -347,16 +353,16 @@ impl Em2rsSyncClient {
         jump_to: u8,
     ) -> Result<()> {
         let base = registers::get_path_base(path_id).ok_or(Em2rsError::InvalidPath(path_id))?;
-        
+
         let mut config = u16::from(motion_type)
             + if interrupt { 0x0010 } else { 0x0000 }
             + if overlap { 0x0020 } else { 0x0000 }
             + if absolute { 0x0000 } else { 0x0040 };
-        
+
         if jump {
             config += 0x4000 + (((jump_to & 0x0F) as u16) << 8);
         }
-        
+
         self.write_register(base, config)
     }
 
@@ -365,7 +371,7 @@ impl Em2rsSyncClient {
         let base = registers::get_path_base(path_id).ok_or(Em2rsError::InvalidPath(path_id))?;
         let lsb = (position & 0xFFFF) as u16;
         let msb = ((position >> 16) & 0xFFFF) as u16;
-        
+
         self.write_register(base + registers::PATH_POSITION_H_OFFSET, msb)?;
         self.write_register(base + registers::PATH_POSITION_L_OFFSET, lsb)
     }
@@ -405,16 +411,16 @@ impl Em2rsSyncClient {
             false,
             0,
         )?;
-        
+
         self.set_path_position(config.path_id, config.position)?;
         self.set_path_velocity(config.path_id, config.velocity)?;
         self.set_path_acceleration(config.path_id, config.acceleration)?;
         self.set_path_deceleration(config.path_id, config.deceleration)?;
-        
+
         if config.pause_time > 0 {
             self.set_path_pause_time(config.path_id, config.pause_time)?;
         }
-        
+
         Ok(())
     }
 
