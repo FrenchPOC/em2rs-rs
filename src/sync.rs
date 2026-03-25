@@ -59,8 +59,6 @@ impl Em2rsSyncClient {
         // Set motor inductance
         self.set_motor_inductance(self.config.inductance)?;
 
-        self.write_register(registers::PERCENT_SHAFT_LOCKED, 15)?;
-
         Ok(())
     }
 
@@ -94,6 +92,34 @@ impl Em2rsSyncClient {
     pub fn set_peak_current(&mut self, phase_current: f32) -> Result<()> {
         let peak_current = (phase_current * 1.4 * 10.0) as u16;
         self.write_register(registers::PEAK_CURRENT, peak_current)
+    }
+
+    /// Set percentage of shaft locked current on power on (Pr5.03)
+    /// Value range: 0-100 (%)
+    pub fn set_percent_shaft_locked(&mut self, percent: u16) -> Result<()> {
+        let value = percent.min(100);
+        self.write_register(registers::PERCENT_SHAFT_LOCKED, value)
+    }
+
+    /// Set shaft locked detection duration (Pr5.04)
+    /// Value range: 0-1500 (ms)
+    pub fn set_shaft_locked_duration(&mut self, duration_ms: u16) -> Result<()> {
+        let value = duration_ms.min(1500);
+        self.write_register(registers::SHAFT_LOCKED_DURATION, value)
+    }
+
+    /// Set rising time of shaft locked current on power on (Pr5.07)
+    /// Value range: 1-60 (100ms steps)
+    pub fn set_shaft_locked_rising_time(&mut self, time: u16) -> Result<()> {
+        let value = time.clamp(1, 60);
+        self.write_register(registers::SHAFT_LOCKED_RISING_TIME, value)
+    }
+
+    /// Set the max stop time (Pr5.10)
+    /// Value range: 100-1000 (ms)
+    pub fn set_max_stop_time(&mut self, time_ms: u16) -> Result<()> {
+        let value = time_ms.clamp(100, 1000);
+        self.write_register(registers::MAX_STOP_TIME, value)
     }
 
     /// Set motor inductance (max 10000)
