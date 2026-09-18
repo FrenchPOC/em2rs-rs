@@ -125,6 +125,8 @@ let motor1 = Em2rsClient::new(ctx, StepperConfig::new(1, 10000));
 - `apply_path_config(config)` - Configure path with position, velocity, acceleration
 - `apply_homing_config(config)` - Configure homing parameters
 - `set_peak_current(current)` - Set motor phase current
+- `set_standby_current_percent(percent)` - Set idle current as % of dynamic current (Pr5.33, 0-100)
+- `set_switching_time_standby(time_ms)` - Set standstill delay before idle current (Pr5.32, 10-65535 ms)
 - `set_soft_limit_max/min(pos)` - Set software position limits
 - `configure_input(no, function, nc)` - Configure digital inputs
 

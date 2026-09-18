@@ -61,6 +61,14 @@ impl Em2rsClient {
         // Set motor inductance
         self.set_motor_inductance(self.config.inductance).await?;
 
+        // Set standby (idle) current when configured
+        if let Some(percent) = self.config.standby_current_percent {
+            self.set_standby_current_percent(percent).await?;
+        }
+        if let Some(time_ms) = self.config.standby_switching_time_ms {
+            self.set_switching_time_standby(time_ms).await?;
+        }
+
         Ok(())
     }
 
@@ -102,6 +110,22 @@ impl Em2rsClient {
     pub async fn set_percent_shaft_locked(&mut self, percent: u16) -> Result<()> {
         let value = percent.min(100);
         self.write_register(registers::PERCENT_SHAFT_LOCKED, value)
+            .await
+    }
+
+    /// Set standby (idle) current as a percentage of the dynamic current (Pr5.33)
+    /// Value range: 0-100 (%), drive default 50
+    pub async fn set_standby_current_percent(&mut self, percent: u16) -> Result<()> {
+        let value = percent.min(100);
+        self.write_register(registers::STANDBY_CURRENT_PERCENT, value)
+            .await
+    }
+
+    /// Set standstill time before the drive drops to the standby current (Pr5.32)
+    /// Value range: 10-65535 (ms), drive default 200
+    pub async fn set_switching_time_standby(&mut self, time_ms: u16) -> Result<()> {
+        let value = time_ms.clamp(10, 65535);
+        self.write_register(registers::SWITCHING_TIME_STANDBY, value)
             .await
     }
 

@@ -303,6 +303,12 @@ pub struct StepperConfig {
     pub direction: Direction,
     pub phase_current: f32,
     pub inductance: u16,
+    /// Standby (idle) current as a percentage of the dynamic current (Pr5.33).
+    /// `None` leaves the drive's current setting untouched (default 50%).
+    pub standby_current_percent: Option<u16>,
+    /// Standstill time before the drive drops to the standby current (Pr5.32).
+    /// `None` leaves the drive's current setting untouched (default 200 ms).
+    pub standby_switching_time_ms: Option<u16>,
 }
 
 impl StepperConfig {
@@ -313,6 +319,8 @@ impl StepperConfig {
             direction: Direction::Clockwise,
             phase_current: 1.0,
             inductance: 1000,
+            standby_current_percent: None,
+            standby_switching_time_ms: None,
         }
     }
 
@@ -328,6 +336,21 @@ impl StepperConfig {
 
     pub fn with_direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
+        self
+    }
+
+    /// Set the standby (idle) current percentage (Pr5.33, 0-100%, drive default 50).
+    /// When set, `init()` writes it to the drive so the motor current drops to
+    /// this percentage of the dynamic current at standstill.
+    pub fn with_standby_current_percent(mut self, percent: u16) -> Self {
+        self.standby_current_percent = Some(percent.min(100));
+        self
+    }
+
+    /// Set the standstill time before the drive drops to standby current
+    /// (Pr5.32, 10-65535 ms, drive default 200).
+    pub fn with_standby_switching_time_ms(mut self, time_ms: u16) -> Self {
+        self.standby_switching_time_ms = Some(time_ms.clamp(10, 65535));
         self
     }
 }
